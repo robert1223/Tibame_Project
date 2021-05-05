@@ -1,13 +1,16 @@
 
-from linebot.models import *
+from linebot.models import CarouselTemplate, CarouselColumn, URITemplateAction, PostbackTemplateAction ,TemplateSendMessage
 def CarouselTemplate_icook(RecipesInformation): # 旋轉木馬訊息設置
 
     CarouselTemplateList = []
     for EachInformation in RecipesInformation:
         col = CarouselColumn(
-            thumbnail_image_url='https://2de75e59a1bd.ngrok.io/static/{}.jpg'.format(EachInformation[0]), # 需連接HDFS內的圖片位置 這裡只是做示範
+            # 測試用(正式上線請註解)
+            thumbnail_image_url='https://tokyo-kitchen.icook.network/uploads/recipe/cover/257813/286e59025c452a90.jpg',
+            # request 自己用Flask架設的 Web server內的圖片位置
+            # thumbnail_image_url='https://cf3f3b7280ce.ngrok.io/picture?RecipeID={}'.format(RecipesInformation[0]),
             title=EachInformation[1],
-            text=' ',
+            text='推薦適合您的食譜!',
             actions=[
                 URITemplateAction(
                     label='前往觀看',

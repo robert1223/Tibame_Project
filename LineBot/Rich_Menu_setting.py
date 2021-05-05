@@ -13,27 +13,23 @@ headers = {
            }
 
 body = {
-    "size": {"width": 2500, "height": 843},
+    "size": {"width": 2500, "height": 916},
     "selected": "true",
     "name": "ceb102_project",
     "chatBarText": "查看更多資訊",
     'areas': [
-        # {
-        # "bounds": {"x": 0, "y": 0, "width": 1000, "height": 843},
-        # "action": {"type": "uri", "label": "", "uri": "https://e49b5ade1949.ngrok.io/?userID=Ue5fb50f1e370cd5c0ff2cacc6515dada"}
-        # },
         {
-        "bounds": {"x": 0, "y": 0, "width": 1000, "height": 843},
+        "bounds": {"x": 0, "y": 0, "width": 1000, "height": 916},
         "action": {"type": "message", "label": "加入會員", "text": "加入會員"}
         },
 
         {
-        "bounds": {"x": 1001, "y": 0, "width": 750, "height": 843},
+        "bounds": {"x": 1001, "y": 0, "width": 750, "height": 916},
         "action": {"type": "message", "label": "主題推薦", "text": "主題推薦"}
         },
         {
-        "bounds": {"x": 1752, "y": 0, "width": 750, "height": 843},
-        "action": {"type": "message", "label": "功能提示", "text": "功能提示"}
+        "bounds": {"x": 1752, "y": 0, "width": 750, "height": 916},
+        "action": {"type": "message", "label": "小幫手", "text": "小幫手"}
         }
     ]
 }
@@ -47,7 +43,7 @@ print('----------')
 
 # 將圖片設定到Rich Menu
 line_bot_api = LineBotApi(secretFile['channelAccessToken'])
-with open("./RichMenuIMG/test.jpg", 'rb') as f:
+with open("./RichMenuIMG/主選單.jpg", 'rb') as f:
     line_bot_api.set_rich_menu_image(RichMenuID, "image/jpeg", f)
 result = requests.request('POST', 'https://api.line.me/v2/bot/user/all/richmenu/' + RichMenuID,
                           headers = headers)

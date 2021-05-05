@@ -1,0 +1,88 @@
+<html>
+    <head>
+        <title>cookEat好主義</title>
+        <style>
+              body { font: 80%  微软雅黑;
+                   }
+             input {font: 50%  微软雅黑;
+                   }
+             h1 {font: 250%  微软雅黑;
+                 margin:15; }
+
+        </style>
+        <meta name="viewport" content="width=device-width,initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+
+    </head>
+
+    <body BGCOLOR=#FFD1A4>
+
+    <CENTER>
+        <h1>會員資料</h1>
+        <TABLE border="1" cellpadding="50" bordercolor="black">
+            <form action="/apply" method="POST">
+            <TD>
+
+                姓名：<input type="text" name="username"><BR><BR>
+
+                <p>1.請問您的性別是?</p>
+                <input type="radio" name="gender" value="male"/>男
+                <input type="radio" name="gender" value="female"/>女
+
+                <p>2.請問您的年齡是?</p>
+                <input type="radio" name="age" value="A0"/>0~20歲
+                <input type="radio" name="age" value="A1"/>21~25歲
+                <input type="radio" name="age" value="A2"/>26~30歲
+                <input type="radio" name="age" value="A3"/>31~35歲
+                <input type="radio" name="age" value="A4"/>36~40歲
+                <input type="radio" name="age" value="A5"/>40歲以上
+
+                <p>3.請問您的身高是?</p>
+                <input type="radio" name="height" value="H0"/>140cm以下
+                <input type="radio" name="height" value="H1"/>141~150cm
+                <input type="radio" name="height" value="H2"/>151~160cm
+                <input type="radio" name="height" value="H3"/>161~170cm
+                <input type="radio" name="height" value="H4"/>171~180cm
+                <input type="radio" name="height" value="H5"/>181cm以上
+
+                <p>4.請問您的體重是?</p>
+                <input type="radio" name="weight" value="W0"/>40kg以下
+                <input type="radio" name="weight" value="W1"/>41~45kg
+                <input type="radio" name="weight" value="W2"/>46~50kg
+                <input type="radio" name="weight" value="W3"/>51~55kg
+                <input type="radio" name="weight" value="W4"/>56~60kg
+                <input type="radio" name="weight" value="W5"/>61~65kg
+                <input type="radio" name="weight" value="W6"/>66~70kg
+                <input type="radio" name="weight" value="W7"/>71~75kg
+                <input type="radio" name="weight" value="W8"/>76~80kg
+                <input type="radio" name="weight" value="W9"/>80kg以上
+
+                <p>5.請問您習慣每周運動幾次呢?</p>
+                <input type="radio" name="exercise" value="E0"/>沒有運動習慣
+                <input type="radio" name="exercise" value="E1"/>1~2次
+                <input type="radio" name="exercise" value="E2"/>3~4次
+                <input type="radio" name="exercise" value="E3"/>5次以上
+
+                <p>6.請問工作時您是否有以下情形?(可複選)</p>
+                <input type="checkbox" name="job" value="stand"/>長時間久站
+                <input type="checkbox" name="job" value="sit"/>長時間久坐
+                <input type="checkbox" name="job" value="eye_strain"/>長時間用眼
+                <input type="checkbox" name="job" value="not_regularly_eat"/>用餐時間不固定
+
+                <p>7.請問您喜歡的料理風格是?(可複選)</p>
+                <input type="checkbox" name="style" value="60"/>日式
+                <input type="checkbox" name="style" value="61"/>韓式
+                <input type="checkbox" name="style" value="62"/>泰式
+                <input type="checkbox" name="style" value="63"/>義式
+                <input type="checkbox" name="style" value="590"/>美式
+
+
+                <BR>
+                <BR>
+                <button type="submit">提交</button>
+                </form>
+            </TD>
+
+        </TABLE>
+    </CENTER>
+    </body >
+</html>

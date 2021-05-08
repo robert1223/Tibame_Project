@@ -38,8 +38,8 @@ IngredientsList = []
 for Ingredient in Ingredients:
     IngredientsList.append(Ingredient[0])
 
+# 建立使用者會員資料的dict
 dict = {}
-
 
 # 存放食譜相關圖片網站
 @app.route("/picture", methods=['GET'])
@@ -48,17 +48,16 @@ def picture():
     return send_file(file_path, mimetype='image/jpg')
     # return '<img src=/static/{}.jpg>'.format(request.args.get('RecipeID'))
 
-
-
 # 使用者填寫基本資料網站
 @app.route("/apply" ,  methods=['GET', 'POST'])
 def index():
 
+    # 使用者進入加入會員的網站後，會把linebot上的的useID當作參數一起帶入，我們將參數取出作為會員資料庫的KEY值
     if request.method == 'GET':
-        userID = request.args.get('userID')   #?userID=12345678aaasss
+        userID = request.args.get('userID')
         dict['UserID'] = userID
-        print(userID)
 
+    #  使用者填完資料後，將裡面所填寫的資料抓出，與上面所抓的userid值一併放在dict裡，轉成df後再存入資料庫
     if request.method == 'POST':
         dict['UserName'] = request.form.get('username')
         dict['gender'] = request.form.get('gender')
@@ -69,20 +68,17 @@ def index():
         dict['job'] = str(request.form.getlist('job'))  # 多選list
         dict['style'] = str(request.form.getlist('style'))
         dict['date'] = datetime.now().strftime("%Y-%m-%d")
-        print(dict)
         df = pd.DataFrame([dict])
 
-        # 建立資料庫連線引擎
-        connect = create_engine('mysql+pymysql://root:ceb102@18.183.16.220:3306/linebot?charset=utf8mb4')
+        # 建立資料庫連線引擎並將資料存入MYSQL
+        connect = create_engine('mysql+pymysql://{}:{}@18.183.16.220:3306/linebot?charset=utf8mb4'
+                                .format(secretFile['user'], secretFile['passwd']))
         df.to_sql(name='UserInformation', con=connect, if_exists='append', index=False)
 
         return render_template("thank.html")
-
     return render_template("questionnaire.html")
 
-
-
-# Linebot接收訊息
+# Linebot接收訊息驗證
 @app.route("/callback", methods=['POST'])
 def callback():
     # get X-Line-Signature header value: 驗證訊息來源(數位簽章)
@@ -101,7 +97,6 @@ def callback():
 
     return 'OK'
 
-
 # Linebot處理文字訊息
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -109,9 +104,8 @@ def handle_message(event):
     # 使用者ID
     user_id = event.source.user_id
 
-
     # 製作主題字典，用來if-else判斷
-    ThemeDict = {"增肌減脂": 0, "美白保養": 1, "提神醒腦": 2, "終結疲勞": 3, "保護眼睛": 4}
+    ThemeDict = {"增肌減脂": 0, "美白": 1, "提神醒腦": 2, "終結疲勞": 3, "護眼營養": 4}
 
     if event.message.text == '小幫手':
 
@@ -123,44 +117,44 @@ def handle_message(event):
         \n另外還可以按\n🍴主題推薦\n我們將推薦各類型的主題食譜給您喔!''')
         )
 
-    elif event.message.text == '加入會員':
+    elif event.message.text == '會員專區':
 
         # Linebot回傳訊息
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text='https://7011417f79ab.ngrok.io/apply?userID={}'.format(user_id))  # ngrok
+            TextSendMessage(text='https://b332fd6c0073.ngrok.io/apply?userID={}'.format(user_id))  # ngrok
         )
 
     elif event.message.text == '主題推薦':
 
         message = ImagemapSendMessage(
-            base_url="https://i.imgur.com/1Wo4oxD.jpg",  # 暫時測試用圖片
-            # base_url=
+            base_url="https://i.imgur.com/DQYAc6A.jpg",
             alt_text="主題推薦",
-            base_size=BaseSize(height=2000, width=2000),
+            base_size=BaseSize(height=1177, width=2000),
             actions=[
                 MessageImagemapAction(
                     text='增肌減脂',
-                    area=ImagemapArea(x=0, y=0, width=1000, height=1000)
+                    area=ImagemapArea(x=150, y=160, width=400, height=420)
                     ),
                 MessageImagemapAction(
-                    text='美白保養',
-                    area=ImagemapArea(x=1000, y=0, width=1000, height=1000)
+                    text='美白',
+                    area=ImagemapArea(x=840, y=160, width=400, height=420)
                     ),
                 MessageImagemapAction(
                     text='提神醒腦',
-                    area=ImagemapArea(x=0, y=1000, width=1000, height=1000)
+                    area=ImagemapArea(x=1480, y=160, width=400, height=420)
                     ),
                 MessageImagemapAction(
                     text='終結疲勞',
-                    area=ImagemapArea(x=1000, y=1000, width=1000, height=1000)
-                    # ),
-                # MessageImagemapAction(
-                #     text='保護眼睛',
-                #     area=ImagemapArea(x=0, y=0, width=0, height=0)
-                )
+                    area=ImagemapArea(x=500, y=620, width=400, height=420)
+                    ),
+                MessageImagemapAction(
+                    text='護眼營養',
+                    area=ImagemapArea(x=1200, y=620, width=400, height=420)
+                    )
                 ]
-        )
+            )
+
         # Linebot回傳訊息
         line_bot_api.reply_message(event.reply_token, message)
 
@@ -177,7 +171,7 @@ def handle_message(event):
             user=secretFile['user'],  # 登入帳號
             password=secretFile['passwd'])  # 登入密碼
         cursor = conn.cursor()
-        query = "select Recipeid, RecipeName from ceb102_project.營養素分群_final where `group` = {};"\
+        query = "select Recipeid, RecipeName from ceb102_project.Recipe_Groups where `group` = {};"\
             .format(ThemeDict[event.message.text])
         cursor.execute(query)
         RecipesInformation = cursor.fetchall()[:5]
@@ -209,8 +203,6 @@ def handle_message(event):
             event.reply_token,
             TextSendMessage(text='''很抱歉!無法搜尋您的資料''')
         )
-
-
 
 # 收到"我喜歡"的 PostbackEvent，儲存使用者喜好方便推薦系統分析
 @handler.add(PostbackEvent)

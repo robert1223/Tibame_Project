@@ -1,34 +1,43 @@
 # 載入相關套件
 from flask import Flask, request, abort, send_file, render_template
 from datetime import datetime
-import json
 from sqlalchemy import create_engine
 import pandas as pd
 import pymysql
+import configparser
+from confluent_kafka import Producer
+
 
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import *
 
 
-# 讀取linebot和mysql連線資訊
-secretFile = json.load(open('./secretFile.txt', 'r'))
+# 讀取Linebot、mysql、kafka連線資訊
+CONFIG = configparser.ConfigParser()
+CONFIG.read('config.ini')
 
 # 建立Flask
 app = Flask(__name__, static_folder='./static', static_url_path='/static')
 
 # 讀取LineBot驗證資訊
-line_bot_api = LineBotApi(secretFile['channelAccessToken'])
-handler = WebhookHandler(secretFile['channelSecret'])
+# line_bot_api = LineBotApi(secretFile['channelAccessToken'])
+# handler = WebhookHandler(secretFile['channelSecret'])
+line_bot_api = LineBotApi(CONFIG['LINE_BOT']['ACCESS_TOKEN'])
+handler = WebhookHandler(CONFIG['LINE_BOT']['SECRET'])
+
+# 建立Producer
+KafkaProducer = Producer({"bootstrap.servers": CONFIG["KAFKA"]["HOST"]})
+
 
 # 讀取資料庫中食材名稱，放入List，用來比對使用者傳入食材名稱
 conn = pymysql.connect(
-            host=secretFile['host'],  # 連線主機名稱
-            port=secretFile['port'],  # 連線主機port號
-            user=secretFile['user'],  # 登入帳號
-            password=secretFile['passwd'])  # 登入密碼
+            host=CONFIG['MYSQL']['HOST'],  # 連線主機名稱
+            port=int(CONFIG['MYSQL']['PORT']),  # 連線主機port號
+            user=CONFIG['MYSQL']['USER'],  # 登入帳號
+            password=CONFIG['MYSQL']['PASSWD'])  # 登入密碼
 cursor = conn.cursor()
-query = 'SELECT Ingredient FROM ceb102_project.Ingredient_icook_1;'
+query = 'SELECT Ingredient FROM ceb102_project.Ingredient_CodeName;'
 cursor.execute(query)
 Ingredients = cursor.fetchall()
 conn.close()
@@ -72,7 +81,7 @@ def index():
 
         # 建立資料庫連線引擎並將資料存入MYSQL
         connect = create_engine('mysql+pymysql://{}:{}@18.183.16.220:3306/linebot?charset=utf8mb4'
-                                .format(secretFile['user'], secretFile['passwd']))
+                                .format(CONFIG['MYSQL']['USER'], CONFIG['MYSQL']['PASSWD']))
         df.to_sql(name='UserInformation', con=connect, if_exists='append', index=False)
 
         return render_template("thank.html")
@@ -122,7 +131,7 @@ def handle_message(event):
         # Linebot回傳訊息
         line_bot_api.reply_message(
             event.reply_token,
-            TextSendMessage(text='https://b332fd6c0073.ngrok.io/apply?userID={}'.format(user_id))  # ngrok
+            TextSendMessage(text='https://bf14084716cc.ngrok.io/apply?userID={}'.format(user_id))  # ngrok
         )
 
     elif event.message.text == '主題推薦':
@@ -166,10 +175,10 @@ def handle_message(event):
 
         # 連線資料庫，將資料抓出
         conn = pymysql.connect(
-            host=secretFile['host'],  # 連線主機名稱
-            port=secretFile['port'],  # 連線主機port號
-            user=secretFile['user'],  # 登入帳號
-            password=secretFile['passwd'])  # 登入密碼
+            host=CONFIG['MYSQL']['HOST'],  # 連線主機名稱
+            port=int(CONFIG['MYSQL']['PORT']),  # 連線主機port號
+            user=CONFIG['MYSQL']['USER'],  # 登入帳號
+            password=CONFIG['MYSQL']['PASSWD'])  # 登入密碼
         cursor = conn.cursor()
         query = "select Recipeid, RecipeName from ceb102_project.Recipe_Groups where `group` = {};"\
             .format(ThemeDict[event.message.text])
@@ -192,7 +201,7 @@ def handle_message(event):
         import Match
 
         # 連線資料庫，將使用者搜尋的食材相關食譜抓出，在依照使用者喜好的風格做比對推薦
-        recommend = Match.Recipe_Match(secretFile, user_id, Ingredient)
+        recommend = Match.Recipe_Match(CONFIG, user_id, Ingredient)
         # 設定回傳訊息的物件
         message = Carousel_template.CarouselTemplate_icook(recommend)
         # # linebot回傳訊息
@@ -210,28 +219,12 @@ def add_favorite(event):
 
     # 使用者ID
     user_id = event.source.user_id
-    user_data = event.postback.data # 使用者按下"我喜歡"的PostbackTemplateAction後，裡面會有記錄該筆食譜的ID(data)，把data取出存入DB
 
-    # 儲存使用者搜尋紀錄
-    while True:
-        try:
-            conn = pymysql.connect(
-                host=secretFile['host'],  # 連線主機名稱
-                port=secretFile['port'],  # 連線主機port號
-                user=secretFile['user'],  # 登入帳號
-                password=secretFile['passwd'])  # 登入密碼
-            cursor = conn.cursor()
-            query = 'INSERT INTO linebot.UserPreferences (UserID, Preference, Time) VALUES (%s, %s, %s)'
-            value = (user_id, user_data, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-            cursor.execute(query, value)
-            conn.commit()
-            conn.close()
-            print('已將資料存進資料庫')
-            break
-        except Exception as e:
-            print('連線失敗:', e)
-            pass
+    # 使用者按下"我喜歡"的PostbackTemplateAction後，裡面會有記錄該筆食譜的ID(data)
+    user_data = event.postback.data
 
+    # 將使用者對食譜的喜好傳送至Kafka
+    KafkaProducer.produce('recipe', key=user_id, value=user_data)
 
 
 # linebot處理照片訊息
@@ -245,17 +238,21 @@ def handle_image_message(event):
     Img_message_content = line_bot_api.get_message_content(event.message.id)  # type :
                                                                               # Linebot.models.responses.Content object
 
-    # 照片儲存名稱
-    fileName = event.message.id + '.jpg'
+    # 照片儲存路徑
+    fileName = './Datasets/image/image.jpg'
 
     # 儲存照片
-    with open('./image/' + fileName, 'wb')as f:
+    with open(fileName + fileName, 'wb')as f:
         for chunk in Img_message_content.iter_content(): # 用迴圈將linebot.models取出
             f.write(chunk)
 
+    # import MyPackage
+    import Picture_Dectection
+    DetectionResult = Picture_Dectection.PictureDetection()  # 辨認使用者傳送的食材
 
-    # DetectionResult 圖片辨認出的食譜文字
-    DetectionResult = '胡蘿蔔' # 測試用(正式上線請註解)
+
+    # # DetectionResult 圖片辨認出的食譜文字
+    # DetectionResult = '胡蘿蔔' # 測試用(正式上線請註解)
 
     if DetectionResult in IngredientsList:
 
@@ -264,7 +261,7 @@ def handle_image_message(event):
         import Match
 
         # 連線資料庫，將使用者搜尋的食材相關食譜抓出，在依照使用者喜好的風格做比對推薦
-        recommend = Match.Recipe_Match(secretFile, user_id, DetectionResult)
+        recommend = Match.Recipe_Match(CONFIG, user_id, DetectionResult)
 
         # 設定回傳訊息的物件
         message = Carousel_template.CarouselTemplate_icook(recommend)

@@ -1,7 +1,13 @@
+from linebot.models import (
+    CarouselTemplate,
+    CarouselColumn,
+    URITemplateAction,
+    PostbackTemplateAction,
+    TemplateSendMessage
+)
 
-from linebot.models import CarouselTemplate, CarouselColumn, URITemplateAction, PostbackTemplateAction ,TemplateSendMessage
-def CarouselTemplate_icook(RecipesInformation): # 旋轉木馬訊息設置
-
+# 旋轉木馬訊息設置
+def CarouselTemplate_icook(RecipesInformation):
     CarouselTemplateList = []
     for EachInformation in RecipesInformation:
         col = CarouselColumn(
@@ -17,10 +23,13 @@ def CarouselTemplate_icook(RecipesInformation): # 旋轉木馬訊息設置
                     uri='https://icook.tw/recipes/{}'.format(EachInformation[0])
                     ),
                 PostbackTemplateAction(
-                    label='我喜歡❤️',
-                    text=' ',
-                    data=EachInformation[0]
-                    )
+                    label='很普通🥱',
+                    data=str(EachInformation[0]) + '_1'
+                    ),
+                PostbackTemplateAction(
+                    label='我很喜歡❤️',
+                    data=str(EachInformation[0]) + '_5'
+                )
                 ]
             )
         CarouselTemplateList.append(col)
@@ -30,4 +39,5 @@ def CarouselTemplate_icook(RecipesInformation): # 旋轉木馬訊息設置
         alt_text='Carousel template',
         template=CarouselTemplate(columns=CarouselTemplateList)
         )
+
     return CarouseltemplateMessage

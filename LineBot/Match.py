@@ -1,14 +1,15 @@
 import pymysql
 import json
 import pandas as pd
-def Recipe_Match(secretFile, user_id, ingrendint):
+
+def Recipe_Match(CONFIG, user_id, ingrendint):
 
     # 連線資料庫，將資料抓出
     conn = pymysql.connect(
-        host=secretFile['host'],  # 連線主機名稱
-        port=secretFile['port'],  # 連線主機port號
-        user=secretFile['user'],  # 登入帳號
-        password=secretFile['passwd'])  # 登入密碼
+        host=CONFIG['MYSQL']['HOST'],  # 連線主機名稱
+        port=int(CONFIG['MYSQL']['PORT']),  # 連線主機port號
+        user=CONFIG['MYSQL']['USER'],  # 登入帳號
+        password=CONFIG['MYSQL']['PASSWD'])  # 登入密碼
     cursor = conn.cursor()
 
     # 建立相關食材的搜尋的query

@@ -1,0 +1,9 @@
+requests
+bs4
+pymongo
+pandas
+numpy
+jieba
+cn2an
+gensim
+sklearn

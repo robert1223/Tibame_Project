@@ -49,3 +49,6 @@
 
 ## LineBot
 使用`linebot-sdk-python`API，並架設flask及啟用ngrok做為webhook
+- app.py: 主要用來架設flask用來與linebot server進行驗證、處理使用者訊息
+- Carousel_template.py: 回覆旋轉木馬訊息設定
+- Match.py: 根據使用者喜好及食材從資料庫比對資料並回傳食譜

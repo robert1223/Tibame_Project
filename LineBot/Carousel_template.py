@@ -12,7 +12,7 @@ def CarouselTemplate_icook(RecipesInformation):
     for EachInformation in RecipesInformation:
         col = CarouselColumn(
             # 測試用(正式上線請註解)
-            thumbnail_image_url='https://tokyo-kitchen.icook.network/uploads/recipe/cover/257813/286e59025c452a90.jpg',
+            thumbnail_image_url=EachInformation[3],
             # request 自己用Flask架設的 Web server內的圖片位置
             # thumbnail_image_url='https://cf3f3b7280ce.ngrok.io/picture?RecipeID={}'.format(RecipesInformation[0]),
             title=EachInformation[1],

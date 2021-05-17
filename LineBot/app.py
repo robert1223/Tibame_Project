@@ -171,6 +171,7 @@ def handle_message(event):
     # 判斷是否符合主題文字(增肌減脂、美白保養.....等)
     elif event.message.text in ThemeDict.keys():
 
+        # Mypackage
         import Carousel_template
 
         # 連線資料庫，將資料抓出
@@ -180,8 +181,12 @@ def handle_message(event):
             user=CONFIG['MYSQL']['USER'],  # 登入帳號
             password=CONFIG['MYSQL']['PASSWD'])  # 登入密碼
         cursor = conn.cursor()
-        query = "select Recipeid, RecipeName from ceb102_project.Recipe_Groups where `group` = {};"\
-            .format(ThemeDict[event.message.text])
+        query = '''
+        select a.Recipeid, a.RecipeName, a.`group`, b.IMGURL from
+        ceb102_project.Recipe_Groups as a 
+        left join ceb102_project.Recipes_IMGURL as b on a.Recipeid = b.Recipeid 
+        where `group` = {};
+        '''.format(ThemeDict[event.message.text])
         cursor.execute(query)
         RecipesInformation = cursor.fetchall()[:5]
         conn.close()
@@ -199,9 +204,16 @@ def handle_message(event):
         # MyPackage
         import Carousel_template
         import Match
+        import Kafka_Consumer_Result
 
-        # 連線資料庫，將使用者搜尋的食材相關食譜抓出，在依照使用者喜好的風格做比對推薦
-        recommend = Match.Recipe_Match(CONFIG, user_id, Ingredient)
+        # 將使用者搜尋的食材傳送至Kafka
+        KafkaProducer.produce(CONFIG["KAFKA"]["TOPIC_1"], key=user_id, value=event.message.text)
+
+        # 將使用者資料Consum下來做運算
+        recommend = Kafka_Consumer_Result.Kafka_Consumer_Result(CONFIG)
+        # print(recommend)
+        # # 連線資料庫，將使用者搜尋的食材相關食譜抓出，在依照使用者喜好的風格做比對推薦
+        # recommend = Match.Recipe_Match(CONFIG, user_id, Ingredient)
         # 設定回傳訊息的物件
         message = Carousel_template.CarouselTemplate_icook(recommend)
         # # linebot回傳訊息
@@ -224,7 +236,7 @@ def add_favorite(event):
     user_data = event.postback.data
 
     # 將使用者對食譜的喜好傳送至Kafka
-    KafkaProducer.produce('recipe', key=user_id, value=user_data)
+    KafkaProducer.produce(CONFIG["KAFKA"]["TOPIC_2"], key=user_id, value=user_data)
 
 
 # linebot處理照片訊息

@@ -1,6 +1,8 @@
 import pymysql
 import json
 import pandas as pd
+import configparser
+
 
 def Recipe_Match(CONFIG, user_id, ingrendint):
 
@@ -13,17 +15,19 @@ def Recipe_Match(CONFIG, user_id, ingrendint):
     cursor = conn.cursor()
 
     # 建立相關食材的搜尋的query
+    # 將相關"食材"的食譜在MySQL先進行query
     Recipe_query = '''
-    select a.Recipeid, a.RecipeName, d.SubCategoryID from 
+    select a.Recipeid, a.RecipeName, d.SubCategoryID, e.IMGURL from 
     ceb102_project.Recipes as a
     left join ceb102_project.Ingredient_CodeName as b on a.ingredient = b.Ingredient     
     left join ceb102_project.RecipeForRecommendation as c on a.Recipeid = c.Recipeid    
     left join ceb102_project.Recipe_SubCategory as d on a.RecipeID = d.RecipeID
+    left join ceb102_project.Recipes_IMGURL as e on a.RecipeID = e.RecipeID
     where b.樣品編號 = 
-    (Select `樣品編號` from ceb102_project.Ingredient_icook where Ingredient = '{}') 
-    group by a.Recipeid, a.RecipeName, d.SubCategoryID
+    (Select `樣品編號` from ceb102_project.Ingredient_CodeName where Ingredient = '{}') 
+    group by a.Recipeid, a.RecipeName, d.SubCategoryID, e.IMGURL
     order by max(c.Total) desc;
-    '''.format(ingrendint)  # 將相關"食材"的食譜在MySQL先進行query
+    '''.format(ingrendint)
     cursor.execute(Recipe_query)
     RecipesInformation = cursor.fetchall()
 
@@ -37,7 +41,7 @@ def Recipe_Match(CONFIG, user_id, ingrendint):
     conn.close()
 
     # 將MySQL 抓回的食譜資料及使用者喜好資料，使用DataFrame做篩選比對
-    Recipe_df = pd.DataFrame(RecipesInformation, columns=['RecipeID', 'RecipeName', 'SubCategory'])
+    Recipe_df = pd.DataFrame(RecipesInformation, columns=['RecipeID', 'RecipeName', 'SubCategory', 'ImgURL'])
     filterLsit = eval(userinformation[0][1])
     df_filter = Recipe_df[Recipe_df['SubCategory'].isin(filterLsit)]
 
@@ -59,8 +63,9 @@ def Recipe_Match(CONFIG, user_id, ingrendint):
 if __name__ == "__main__":
 
     # 讀取mysql連線資訊
-    secretFile = json.load(open('./secretFile.txt', 'r'))
+    CONFIG = configparser.ConfigParser()
+    CONFIG.read('config.ini')
     user_id = 'Ue5fb50f1e370cd5c0ff2cacc6515dada'
     ingrendint = '起司'
-    result = Recipe_Match(secretFile, user_id, ingrendint)
+    result = Recipe_Match(CONFIG, user_id, ingrendint)
     print(result)

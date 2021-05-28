@@ -12,7 +12,7 @@
 ## 環境架設
 - 使用Linux及Docker架設環境
 - 建立MongoDB與MySQL用於儲存食譜資料
-- 使用Kafka做為即時收集使用者數據的第一街口
+- 使用Kafka做為即時收集使用者數據的第一接口
 - 使用Hadoop儲存使用者資訊
 
 ## 食譜網站爬蟲
@@ -52,3 +52,11 @@
 - app.py: 主要用來架設flask用來與linebot server進行驗證、處理使用者訊息
 - Carousel_template.py: 回覆旋轉木馬訊息設定
 - Match.py: 根據使用者喜好及食材從資料庫比對資料並回傳食譜
+
+## 影片Demo
+
+https://user-images.githubusercontent.com/78791996/119953894-094c5680-bfd1-11eb-9ab4-df0ad421b998.mp4
+
+
+
+

@@ -7,3 +7,4 @@ jieba
 cn2an
 gensim
 sklearn
+line-bot-sdk
